@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, Eye, Package, FileText, RefreshCw, Save, ExternalLink } from "lucide-react";
 import NavBar from "@/components/NavBar";
+import NumberInput from "@/components/NumberInput";
 import { loadData, updateReminders } from "@/lib/store";
 import type { AppData, ReminderSettings } from "@/lib/types";
 import { getChangeStatus, getDaysUntilChange, getPrescriptionDaysLeft, getPrescriptionStatus } from "@/lib/utils";
@@ -262,12 +263,11 @@ export default function RemindersPage() {
                     </button>
                   ))}
                 </div>
-                <input
-                  type="number"
+                <NumberInput
                   min={7}
                   max={180}
                   value={form.examReminderDaysBefore}
-                  onChange={(e) => setForm((f) => f ? { ...f, examReminderDaysBefore: parseInt(e.target.value) || 30 } : f)}
+                  onChange={(n) => setForm((f) => f ? { ...f, examReminderDaysBefore: n } : f)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>

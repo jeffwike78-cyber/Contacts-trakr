@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Eye, Plus, RefreshCw, Clock, Save, Trash2, LogIn } from "lucide-react";
 import NavBar from "@/components/NavBar";
+import NumberInput from "@/components/NumberInput";
 import { loadData, saveData, updateLens, addWearLogEntry } from "@/lib/store";
 import type { AppData, ContactLens, ContactSchedule } from "@/lib/types";
 import {
@@ -249,12 +250,11 @@ export default function LensesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Custom replacement interval (days)
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   min={1}
                   max={90}
-                  value={form.replacementDays ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, replacementDays: parseInt(e.target.value) || 1 }))}
+                  value={form.replacementDays ?? 1}
+                  onChange={(n) => setForm((f) => ({ ...f, replacementDays: n }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>

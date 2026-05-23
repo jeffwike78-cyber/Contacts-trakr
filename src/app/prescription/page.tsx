@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { FileText, Camera, Save, Trash2, Calendar, Eye, Upload } from "lucide-react";
+import { FileText, Camera, Save, Trash2, Calendar, Eye, Upload, Loader2, Sparkles, AlertCircle } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import { loadData, updatePrescription } from "@/lib/store";
 import type { AppData, Prescription } from "@/lib/types";
@@ -38,6 +38,9 @@ export default function PrescriptionPage() {
   const [form, setForm] = useState<Partial<Prescription>>({});
   const [saved, setSaved] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [ocrApplied, setOcrApplied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,14 +61,57 @@ export default function PrescriptionPage() {
   const rxDaysLeft = prescription ? getPrescriptionDaysLeft(prescription) : null;
   const rxStatus = prescription ? getPrescriptionStatus(prescription) : null;
 
-  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const dataUrl = ev.target?.result as string;
       setPhotoPreview(dataUrl);
       setForm((f) => ({ ...f, photoDataUrl: dataUrl }));
+      setOcrError(null);
+      setOcrApplied(false);
+
+      // Extract base64 and media type from data URL
+      const [header, base64] = dataUrl.split(",");
+      const mediaType = header.match(/data:([^;]+)/)?.[1] ?? "image/jpeg";
+
+      setOcrLoading(true);
+      try {
+        const res = await fetch("/api/parse-prescription", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: base64, mediaType }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "OCR failed");
+
+        const d = json.data;
+        setForm((f) => ({
+          ...f,
+          ...(d.odSphere && { odSphere: d.odSphere }),
+          ...(d.odCylinder && { odCylinder: d.odCylinder }),
+          ...(d.odAxis && { odAxis: d.odAxis }),
+          ...(d.odAdd && { odAdd: d.odAdd }),
+          ...(d.odBc && { odBc: d.odBc }),
+          ...(d.odDia && { odDia: d.odDia }),
+          ...(d.osSphere && { osSphere: d.osSphere }),
+          ...(d.osCylinder && { osCylinder: d.osCylinder }),
+          ...(d.osAxis && { osAxis: d.osAxis }),
+          ...(d.osAdd && { osAdd: d.osAdd }),
+          ...(d.osBc && { osBc: d.osBc }),
+          ...(d.osDia && { osDia: d.osDia }),
+          ...(d.doctorName && { doctorName: d.doctorName }),
+          ...(d.clinicName && { clinicName: d.clinicName }),
+          ...(d.expirationDate && { expiresAt: new Date(d.expirationDate).toISOString() }),
+        }));
+        setOcrApplied(true);
+      } catch (err) {
+        setOcrError(err instanceof Error ? err.message : "Could not read prescription");
+      } finally {
+        setOcrLoading(false);
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -271,11 +317,31 @@ export default function PrescriptionPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={photoPreview} alt="Preview" className="w-full rounded-xl object-contain max-h-40 border border-gray-100" />
                       <button
-                        onClick={() => { setPhotoPreview(null); setForm((f) => ({ ...f, photoDataUrl: null })); }}
+                        onClick={() => { setPhotoPreview(null); setForm((f) => ({ ...f, photoDataUrl: null })); setOcrApplied(false); setOcrError(null); }}
                         className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
+                    </div>
+                  )}
+
+                  {/* OCR status */}
+                  {ocrLoading && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-xl px-3 py-2.5">
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      Reading prescription with AI — this takes a few seconds…
+                    </div>
+                  )}
+                  {ocrApplied && !ocrLoading && (
+                    <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2.5">
+                      <Sparkles className="w-4 h-4 shrink-0" />
+                      Fields auto-filled from your prescription photo. Review and correct anything below.
+                    </div>
+                  )}
+                  {ocrError && !ocrLoading && (
+                    <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 rounded-xl px-3 py-2.5">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>Couldn&apos;t auto-read the image ({ocrError}). Please fill in the fields manually.</span>
                     </div>
                   )}
                 </div>

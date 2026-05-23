@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Package, Plus, Minus, Save, ShoppingCart, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import NavBar from "@/components/NavBar";
+import NumberInput from "@/components/NumberInput";
 import { loadData, updateInventory } from "@/lib/store";
 import type { AppData, Inventory } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -109,11 +110,10 @@ export default function InventoryPage() {
           {/* Manual input */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Set exact count</label>
-            <input
-              type="number"
+            <NumberInput
               min={0}
               value={form.pairsRemaining}
-              onChange={(e) => setForm((f) => f ? { ...f, pairsRemaining: Math.max(0, parseInt(e.target.value) || 0) } : f)}
+              onChange={(n) => setForm((f) => f ? { ...f, pairsRemaining: n } : f)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -141,11 +141,10 @@ export default function InventoryPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Low stock alert at (pairs)
               </label>
-              <input
-                type="number"
+              <NumberInput
                 min={1}
                 value={form.lowStockThreshold}
-                onChange={(e) => setForm((f) => f ? { ...f, lowStockThreshold: parseInt(e.target.value) || 1 } : f)}
+                onChange={(n) => setForm((f) => f ? { ...f, lowStockThreshold: n } : f)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <p className="text-xs text-gray-400 mt-1">Show a warning when supply drops to this level</p>
@@ -154,11 +153,10 @@ export default function InventoryPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Reorder reminder at (pairs)
               </label>
-              <input
-                type="number"
+              <NumberInput
                 min={1}
                 value={form.reorderThreshold}
-                onChange={(e) => setForm((f) => f ? { ...f, reorderThreshold: parseInt(e.target.value) || 1 } : f)}
+                onChange={(n) => setForm((f) => f ? { ...f, reorderThreshold: n } : f)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <p className="text-xs text-gray-400 mt-1">When to suggest reordering contacts</p>
