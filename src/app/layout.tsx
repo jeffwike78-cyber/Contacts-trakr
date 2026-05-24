@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NotificationInit from "@/components/NotificationInit";
 
 export const metadata: Metadata = {
-  title: "ContactsLens Tracker",
+  title: "Contact Lens Tracker",
   description: "Track your contact lenses, prescription, and inventory",
 };
 
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <NotificationInit />
+        {children}
+      </body>
     </html>
   );
 }
